@@ -1,14 +1,12 @@
 import MagnifyingGlassIcon from "@heroicons/react/24/solid/MagnifyingGlassIcon";
 import { Card, InputAdornment, OutlinedInput, SvgIcon } from "@mui/material";
 
-export const ContactsSearch = ({ searchTerm, setSearchTerm, filterData }) => (
+export const ClaimsSearch = () => (
   <Card sx={{ p: 2 }}>
     <OutlinedInput
-      // value={searchTerm}
-      onChange={(event) => filterData(event.target.value)}
-      // defaultValue=""
+      defaultValue=""
       fullWidth
-      placeholder="Search customer"
+      placeholder="Search Claim"
       startAdornment={
         <InputAdornment position="start">
           <SvgIcon color="action" fontSize="small">

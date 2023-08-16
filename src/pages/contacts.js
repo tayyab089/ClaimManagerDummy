@@ -1,251 +1,42 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import Head from "next/head";
 import { subDays, subHours } from "date-fns";
 import ArrowDownOnSquareIcon from "@heroicons/react/24/solid/ArrowDownOnSquareIcon";
 import ArrowUpOnSquareIcon from "@heroicons/react/24/solid/ArrowUpOnSquareIcon";
 import PlusIcon from "@heroicons/react/24/solid/PlusIcon";
-import { Box, Button, Container, Stack, SvgIcon, Typography } from "@mui/material";
+import { Box, Button, Container, Stack, SvgIcon, Typography, LinearProgress } from "@mui/material";
 import { useSelection } from "src/hooks/use-selection";
 import { Layout as DashboardLayout } from "src/layouts/dashboard/layout";
 import { ContactsTable } from "src/sections/contacts/contacts-table";
 import { ContactsSearch } from "src/sections/contacts/contacts-search";
 import { ContactsAdd } from "src/sections/contacts/contacs-add";
 import { applyPagination } from "src/utils/apply-pagination";
+import { getContactsApi, deleteContactApi } from "src/network/api";
 
-const now = new Date();
-
-const data = [
-  {
-    id: "5e887ac47eed253091be10cb",
-    address: [
-      {
-        type: "work",
-        city: "Cleveland",
-        countryCode: "US",
-        zip: "2500",
-        street: "2849 Fulton Street",
-      },
-    ],
-    avatar: "/assets/avatars/avatar-carson-darrin.png",
-    createdAt: subDays(subHours(now, 7), 1).getTime(),
-    email: [
-      { type: "work", email: "carson.darrin@devias.io" },
-      { type: "work", email: "tayyab.darrin@devias.io" },
-    ],
-    name: "Carson Darrin",
-    phone: [
-      { type: "work", no: "309-432-123" },
-      { type: "work", no: "309-432-157" },
-    ],
-  },
-  {
-    id: "5e887b209c28ac3dd97f6db5",
-    address: [
-      {
-        city: "Atlanta",
-        country: "USA",
-        state: "Georgia",
-        street: "1865  Pleasant Hill Road",
-      },
-    ],
-    avatar: "/assets/avatars/avatar-fran-perez.png",
-    createdAt: subDays(subHours(now, 1), 2).getTime(),
-    email: [{ type: "work", email: "carson.darrin@devias.io" }],
-    name: "Fran Perez",
-    phone: [{ type: "work", no: "309-432-123" }],
-  },
-  {
-    id: "5e887b7602bdbc4dbb234b27",
-    address: [
-      {
-        city: "North Canton",
-        country: "USA",
-        state: "Ohio",
-        street: "4894  Lakeland Park Drive",
-      },
-    ],
-    avatar: "/assets/avatars/avatar-jie-yan-song.png",
-    createdAt: subDays(subHours(now, 4), 2).getTime(),
-    email: [
-      { type: "work", email: "carson.darrin@devias.io" },
-      { type: "work", email: "tayyab.darrin@devias.io" },
-    ],
-    name: "Jie Yan Song",
-    phone: [
-      { type: "work", no: "309-432-123" },
-      { type: "work", no: "309-432-157" },
-    ],
-  },
-  {
-    id: "5e86809283e28b96d2d38537",
-    address: [
-      {
-        city: "Madrid",
-        country: "Spain",
-        name: "Anika Visser",
-        street: "4158  Hedge Street",
-      },
-    ],
-    avatar: "/assets/avatars/avatar-anika-visser.png",
-    createdAt: subDays(subHours(now, 11), 2).getTime(),
-    email: [{ type: "work", email: "carson.darrin@devias.io" }],
-    name: "Anika Visser",
-    phone: [
-      { type: "work", no: "309-432-123" },
-      { type: "work", no: "309-432-157" },
-    ],
-  },
-  {
-    id: "5e86805e2bafd54f66cc95c3",
-    address: [
-      {
-        city: "San Diego",
-        country: "USA",
-        state: "California",
-        street: "75247",
-      },
-    ],
-    avatar: "/assets/avatars/avatar-miron-vitold.png",
-    createdAt: subDays(subHours(now, 7), 3).getTime(),
-    email: [
-      { type: "work", email: "carson.darrin@devias.io" },
-      { type: "work", email: "tayyab.darrin@devias.io" },
-    ],
-    name: "Miron Vitold",
-    phone: [
-      { type: "work", no: "309-432-123" },
-      { type: "work", no: "309-432-157" },
-    ],
-  },
-  {
-    id: "5e887a1fbefd7938eea9c981",
-    address: [
-      {
-        city: "Berkeley",
-        country: "USA",
-        state: "California",
-        street: "317 Angus Road",
-      },
-    ],
-    avatar: "/assets/avatars/avatar-penjani-inyene.png",
-    createdAt: subDays(subHours(now, 5), 4).getTime(),
-    email: [{ type: "work", email: "carson.darrin@devias.io" }],
-    name: "Penjani Inyene",
-    phone: [
-      { type: "work", no: "309-432-123" },
-      { type: "work", no: "309-432-157" },
-    ],
-  },
-  {
-    id: "5e887d0b3d090c1b8f162003",
-    address: [
-      {
-        city: "Carson City",
-        country: "USA",
-        state: "Nevada",
-        street: "2188  Armbrester Drive",
-      },
-    ],
-    avatar: "/assets/avatars/avatar-omar-darboe.png",
-    createdAt: subDays(subHours(now, 15), 4).getTime(),
-    email: [{ type: "work", email: "carson.darrin@devias.io" }],
-    name: "Omar Darobe",
-    phone: [
-      { type: "work", no: "309-432-123" },
-      { type: "work", no: "309-432-157" },
-    ],
-  },
-  {
-    id: "5e88792be2d4cfb4bf0971d9",
-    address: [
-      {
-        city: "Los Angeles",
-        country: "USA",
-        state: "California",
-        street: "1798  Hickory Ridge Drive",
-      },
-    ],
-    avatar: "/assets/avatars/avatar-siegbert-gottfried.png",
-    createdAt: subDays(subHours(now, 2), 5).getTime(),
-    email: [
-      { type: "work", email: "carson.darrin@devias.io" },
-      { type: "work", email: "tayyab.darrin@devias.io" },
-    ],
-    name: "Siegbert Gottfried",
-    phone: [
-      { type: "work", no: "309-432-123" },
-      { type: "work", no: "309-432-157" },
-    ],
-  },
-  {
-    id: "5e8877da9a65442b11551975",
-    address: [
-      {
-        city: "Murray",
-        country: "USA",
-        state: "Utah",
-        street: "3934  Wildrose Lane",
-      },
-    ],
-    avatar: "/assets/avatars/avatar-iulia-albu.png",
-    createdAt: subDays(subHours(now, 8), 6).getTime(),
-    email: [
-      { type: "work", email: "carson.darrin@devias.io" },
-      { type: "work", email: "tayyab.darrin@devias.io" },
-    ],
-    name: "Iulia Albu",
-    phone: [
-      { type: "work", no: "309-432-123" },
-      { type: "work", no: "309-432-157" },
-    ],
-  },
-  {
-    id: "5e8680e60cba5019c5ca6fda",
-    address: [
-      {
-        city: "Salt Lake City",
-        country: "USA",
-        state: "Utah",
-        street: "368 Lamberts Branch Road",
-      },
-    ],
-    avatar: "/assets/avatars/avatar-nasimiyu-danai.png",
-    createdAt: subDays(subHours(now, 1), 9).getTime(),
-    email: [
-      { type: "work", email: "carson.darrin@devias.io" },
-      { type: "work", email: "tayyab.darrin@devias.io" },
-    ],
-    name: "Nasimiyu Danai",
-    phone: [
-      { type: "work", no: "309-432-123" },
-      { type: "work", no: "309-432-157" },
-    ],
-  },
-];
-
-const useCustomers = (page, rowsPerPage) => {
+const useContacts = (contactsData, page, rowsPerPage) => {
   return useMemo(() => {
-    return applyPagination(data, page, rowsPerPage);
-  }, [page, rowsPerPage]);
+    return applyPagination(contactsData, page, rowsPerPage);
+  }, [contactsData, page, rowsPerPage]);
 };
 
-const useCustomerIds = (customers) => {
+const useContactIds = (contacts) => {
   return useMemo(() => {
-    return customers.map((customer) => customer.id);
-  }, [customers]);
+    return contacts?.map((contact) => contact.id);
+  }, [contacts]);
 };
 
 const Page = () => {
+  const [contactsData, setContactsData] = useState([]);
+  const [contactItem, setContactItem] = useState(null);
+  const [isLoading, setIsloading] = useState(true);
+  const [isEdit, setIsEdit] = useState(false);
+
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const customers = useCustomers(page, rowsPerPage);
-  const customersIds = useCustomerIds(customers);
-  const customersSelection = useSelection(customersIds);
+  const contacts = useContacts(contactsData, page, rowsPerPage);
+  const contactIds = useContactIds(contacts);
+  const contactsSelection = useSelection(contactIds);
   const [openModal, setOpenModal] = useState(false);
-
-  const handleClose = () => {
-    setOpenModal(false);
-  };
 
   const handlePageChange = useCallback((event, value) => {
     setPage(value);
@@ -254,6 +45,66 @@ const Page = () => {
   const handleRowsPerPageChange = useCallback((event) => {
     setRowsPerPage(event.target.value);
   }, []);
+
+  // API Functions----------------------------------------------
+  const fetchContacts = async () => {
+    setIsloading(true);
+    const response = await getContactsApi();
+    if (response && response.data.type !== "error") {
+      setContactsData(response.data.data);
+    } else {
+      alert(`${response.data.message}`);
+    }
+    setIsloading(false);
+  };
+
+  const deleteContact = async (contact) => {
+    const response = await deleteContactApi({ contact: contact });
+    if (response && response.data.type !== "error") {
+      alert(`${response.data.message}`);
+    } else {
+      alert(`${response.data.message}`);
+    }
+    fetchContacts();
+  };
+
+  useEffect(() => {
+    fetchContacts();
+  }, []);
+
+  // Modal Functions ----------------------------------------------
+  const handleRowClick = (item) => {
+    setContactItem(item);
+    setIsEdit(true);
+  };
+
+  const handleClose = (event, reason) => {
+    if (reason !== "backdropClick") {
+      setIsEdit(false);
+      setContactItem(null);
+      setOpenModal(false);
+    }
+  };
+
+  const handleOpen = () => {
+    setOpenModal(true);
+  };
+
+  useEffect(() => {
+    if (isEdit) {
+      setOpenModal(true);
+    }
+  }, [isEdit]);
+
+  // Search Functions and State-------------------------------------
+
+  const [filteredContacts, setFilteredContacts] = useState([]);
+
+  const filterData = (val) => {
+    const filteredData = contacts.filter((obj) => obj.name.includes(val));
+    console.log(filteredData);
+    setFilteredContacts(filteredData);
+  };
 
   return (
     <>
@@ -272,28 +123,6 @@ const Page = () => {
             <Stack direction="row" justifyContent="space-between" spacing={4}>
               <Stack spacing={1}>
                 <Typography variant="h4">Contacts</Typography>
-                {/* <Stack alignItems="center" direction="row" spacing={1}>
-                  <Button
-                    color="inherit"
-                    startIcon={
-                      <SvgIcon fontSize="small">
-                        <ArrowUpOnSquareIcon />
-                      </SvgIcon>
-                    }
-                  >
-                    Import
-                  </Button>
-                  <Button
-                    color="inherit"
-                    startIcon={
-                      <SvgIcon fontSize="small">
-                        <ArrowDownOnSquareIcon />
-                      </SvgIcon>
-                    }
-                  >
-                    Export
-                  </Button>
-                </Stack> */}
               </Stack>
               <div>
                 <Button
@@ -303,28 +132,42 @@ const Page = () => {
                     </SvgIcon>
                   }
                   variant="contained"
-                  onClick={() => setOpenModal(true)}
+                  onClick={handleOpen}
                 >
                   Add
                 </Button>
               </div>
             </Stack>
-            <ContactsSearch />
-            <ContactsTable
-              count={data.length}
-              items={customers}
-              onDeselectAll={customersSelection.handleDeselectAll}
-              onDeselectOne={customersSelection.handleDeselectOne}
-              onPageChange={handlePageChange}
-              onRowsPerPageChange={handleRowsPerPageChange}
-              onSelectAll={customersSelection.handleSelectAll}
-              onSelectOne={customersSelection.handleSelectOne}
-              page={page}
-              rowsPerPage={rowsPerPage}
-              selected={customersSelection.selected}
-            />
+            <ContactsSearch filterData={filterData} />
+            {isLoading ? (
+              <Box sx={{ width: "100%" }}>
+                <LinearProgress />
+              </Box>
+            ) : (
+              <ContactsTable
+                count={filteredContacts.length > 0 ? filteredContacts.length : contactsData.length}
+                items={filteredContacts.length > 0 ? filteredContacts : contacts}
+                onDeselectAll={contactsSelection.handleDeselectAll}
+                onDeselectOne={contactsSelection.handleDeselectOne}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
+                onSelectAll={contactsSelection.handleSelectAll}
+                onSelectOne={contactsSelection.handleSelectOne}
+                page={page}
+                rowsPerPage={rowsPerPage}
+                selected={contactsSelection.selected}
+                handleRowClick={handleRowClick}
+                deleteContact={deleteContact}
+              />
+            )}
           </Stack>
-          <ContactsAdd open={openModal} handleClose={handleClose} />
+          <ContactsAdd
+            open={openModal}
+            handleClose={handleClose}
+            item={contactItem}
+            isEdit={isEdit}
+            fetchContacts={fetchContacts}
+          />
         </Container>
       </Box>
     </>
